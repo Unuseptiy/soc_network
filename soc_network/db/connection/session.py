@@ -31,7 +31,14 @@ async def get_session() -> AsyncSession:
         yield session
 
 
+async def get_session_for_test() -> AsyncSession:
+    session_maker = SessionManager().get_session_maker()
+    async with session_maker() as session:
+        return session
+
+
 __all__ = [
     "get_session",
-    "SessionManager"
+    "SessionManager",
+    "get_session_for_test",
 ]
