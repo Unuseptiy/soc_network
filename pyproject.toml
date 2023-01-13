@@ -13,9 +13,23 @@ passlib = "^1.7.4"
 alembic = "^1.9.1"
 python-dotenv = "^0.21.0"
 psycopg2-binary = "^2.9.5"
+pytest = "^7.2.0"
+pydantic = {extras = ["email"], version = "^1.10.4"}
+pytest-aiohttp = "^1.0.4"
+bcrypt = "^4.0.1"
+asyncpg = "^0.27.0"
 
 [tool.poetry.dev-dependencies]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+
+# PYTEST
+
+[tool.pytest]
+python_files = "test_*.py"
+python_classes = ["*Test", "Test*"]
+python_functions = "test_*"
+testpaths = "tests/"
