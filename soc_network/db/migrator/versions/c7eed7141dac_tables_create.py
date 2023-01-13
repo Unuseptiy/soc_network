@@ -22,9 +22,9 @@ def upgrade() -> None:
     sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('dt_created', postgresql.TIMESTAMP(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('dt_updated', postgresql.TIMESTAMP(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
-    sa.Column('username', sa.TEXT(), nullable=False),
+    sa.Column('username', sa.TEXT(), nullable=False, unique=True),
     sa.Column('password', sa.TEXT(), nullable=False),
-    sa.Column('email', sa.TEXT(), nullable=True),
+    sa.Column('email', sa.TEXT(), nullable=True, unique=True),
     sa.PrimaryKeyConstraint('id', name=op.f('pk__user')),
     sa.UniqueConstraint('id', name=op.f('uq__user__id'))
     )
