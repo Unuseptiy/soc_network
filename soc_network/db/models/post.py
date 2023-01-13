@@ -13,8 +13,8 @@ class Post(BaseTable):
         nullable=False,
         doc="Post body.",
     )
-    author = Column(
-        "author",
+    author_id = Column(
+        "author_id",
         ForeignKey('user.id'),
         nullable=False,
         doc="Post author.",

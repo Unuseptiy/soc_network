@@ -27,5 +27,5 @@ class User(BaseTable):
         TEXT,
         nullable=True,
         unique=True,
-        doc="Email for notifications.",
+        doc="User email.",
     )

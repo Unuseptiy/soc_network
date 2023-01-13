@@ -35,8 +35,8 @@ def upgrade() -> None:
     sa.Column('dt_created', postgresql.TIMESTAMP(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('dt_updated', postgresql.TIMESTAMP(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('body', sa.TEXT(), nullable=False),
-    sa.Column('author', postgresql.UUID(as_uuid=True), nullable=False),
-    sa.ForeignKeyConstraint(['author'], ['user.id'], name=op.f('fk__post__author__user')),
+    sa.Column('author_id', postgresql.UUID(as_uuid=True), nullable=False),
+    sa.ForeignKeyConstraint(['author_id'], ['user.id'], name=op.f('fk__post__author__user')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk__post')),
     sa.UniqueConstraint('id', name=op.f('uq__post__id'))
     )
