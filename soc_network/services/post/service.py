@@ -1,7 +1,8 @@
 from uuid import UUID
 
 from soc_network.repositories import PostRepository, PostActionRepository, UserRepository
-from soc_network.schemas import User as UserSchema, Post as PostSchema, PostActionEnum
+from soc_network.db.models import User
+from soc_network.schemas import Post as PostSchema, PostActionEnum
 from soc_network.services import exceptions as serv_exc
 from soc_network.repositories import exceptions as db_exc
 
@@ -26,7 +27,7 @@ async def get_post(
 async def update_post(
         post_id: UUID,
         new_body: str,
-        user: UserSchema,
+        user: User,
         post_repo: PostRepository,
 ):
     permissions = await have_permissions_to_edit_post(post_id, user, post_repo)
@@ -40,7 +41,7 @@ async def update_post(
 
 async def delete_post(
         post_id: UUID,
-        user: UserSchema,
+        user: User,
         post_repo: PostRepository,
         user_repo: UserRepository,
         post_act_repo: PostActionRepository,
@@ -67,7 +68,7 @@ async def delete_post(
 
 async def rate_post(
         post_id: UUID,
-        user: UserSchema,
+        user: User,
         action: PostActionEnum,
         post_repo: PostRepository,
         user_repo: UserRepository,
@@ -103,7 +104,7 @@ async def rate_post(
 
 async def delete_post_rate(
         post_id: UUID,
-        user: UserSchema,
+        user: User,
         action: PostActionEnum,
         post_repo: PostRepository,
         user_repo: UserRepository,
@@ -132,7 +133,7 @@ async def delete_post_rate(
 
 async def have_permissions_to_edit_post(
         post_id: UUID,
-        user: UserSchema,
+        user: User,
         post_repo: PostRepository,
 ):
     post = await post_repo.get(post_id=post_id)
@@ -141,7 +142,7 @@ async def have_permissions_to_edit_post(
 
 async def have_permissions_to_delete_post(
         post_id: UUID,
-        user: UserSchema,
+        user: User,
         post_repo: PostRepository,
 ):
     post = await post_repo.get(post_id=post_id)
@@ -150,7 +151,7 @@ async def have_permissions_to_delete_post(
 
 async def have_permissions_to_rate_post(
         post_id: UUID,
-        user: UserSchema,
+        user: User,
         post_repo: PostRepository,
 ):
     post = await post_repo.get(post_id=post_id)
@@ -159,7 +160,7 @@ async def have_permissions_to_rate_post(
 
 async def have_permissions_to_delete_post_act(
         post_id: UUID,
-        user: UserSchema,
+        user: User,
         action: str,
         post_act_repo: PostActionRepository,
 ):
