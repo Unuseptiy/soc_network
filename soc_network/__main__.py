@@ -1,10 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from uvicorn import run
 
 from soc_network.config import DefaultSettings, get_settings
 from soc_network.db.connection import SessionManager
 from soc_network.services.common import get_hostname
 from soc_network.api import list_of_routes
+from soc_network.repositories.exceptions import DbUnavailable
 
 
 def bind_routes(application: FastAPI, setting: DefaultSettings) -> None:
@@ -44,6 +46,14 @@ def get_app() -> FastAPI:
         version="0.1.0",
         openapi_tags=tags_metadata,
     )
+
+    @application.exception_handler(DbUnavailable)
+    async def api_exception_handler(request: Request, exc: DbUnavailable):
+        return JSONResponse(
+            status_code=exc.code,
+            content={"code": exc.code, "message": exc.message}
+        )
+
     settings = get_settings()
     bind_routes(application, settings)
     init_database()

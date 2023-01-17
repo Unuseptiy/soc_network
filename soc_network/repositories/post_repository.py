@@ -20,12 +20,17 @@ class PostRepository:
             await self.session.commit()
         except exc.IntegrityError:
             raise custom_exc.DbError('No user error.')
+        except OSError:
+            raise custom_exc.DbUnavailable(code=500, message='Database unavailable.')
         await self.session.refresh(new_post)
         return new_post.id
 
     async def get(self, post_id: UUID):
         get_post_query = select(Post).where(Post.id == post_id)
-        post_from_db = await self.session.scalar(get_post_query)
+        try:
+            post_from_db = await self.session.scalar(get_post_query)
+        except OSError:
+            raise custom_exc.DbUnavailable(code=500, message='Database unavailable.')
         if post_from_db is None:
             return None
         return post_from_db
@@ -33,12 +38,21 @@ class PostRepository:
     async def delete(self, post_id: UUID):
         delete_post_query = delete(Post).where(Post.id == post_id)
         await self.session.execute(delete_post_query)
-        await self.session.commit()
+        try:
+            await self.session.commit()
+        except OSError:
+            raise custom_exc.DbUnavailable(code=500, message='Database unavailable.')
 
     async def update(self, post_id: UUID, new_body: str):
         get_post_query = select(Post).where(Post.id == post_id)
-        post_from_db = await self.session.scalar(get_post_query)
+        try:
+            post_from_db = await self.session.scalar(get_post_query)
+        except OSError:
+            raise custom_exc.DbUnavailable(code=500, message='Database unavailable.')
         if post_from_db is None:
             raise custom_exc.DbError(f'No such post id: {post_id}')
         post_from_db.body = new_body
-        await self.session.commit()
+        try:
+            await self.session.commit()
+        except OSError:
+            raise custom_exc.DbUnavailable(code=500, message='Database unavailable.')

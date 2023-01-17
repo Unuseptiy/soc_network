@@ -17,6 +17,8 @@ class PostActionRepository:
             await self.session.commit()
         except exc.IntegrityError:
             raise custom_exc.DbError('This post action already exists.')
+        except OSError:
+            raise custom_exc.DbUnavailable(code=500, message='Database unavailable.')
         await self.session.refresh(new_post_action)
 
     async def list_by(self, **kwargs):
@@ -27,10 +29,13 @@ class PostActionRepository:
             list_post_action_query = list_post_action_query.where(PostAction.user_id == kwargs['user_id'])
         if 'action' in kwargs:
             list_post_action_query = list_post_action_query.where(PostAction.action == kwargs['action'])
-        post_actions_from_db = await self.session.scalars(list_post_action_query)
-        if post_actions_from_db is None:
-            return None
-        return post_actions_from_db
+        try:
+            post_actions_from_db = await self.session.scalars(list_post_action_query)
+            if post_actions_from_db is None:
+                return None
+            return post_actions_from_db
+        except OSError:
+            raise custom_exc.DbUnavailable(code=500, message='Database unavailable.')
 
     async def delete(self, user_id: UUID, post_id: UUID, action: str):
         delete_post_act_query = delete(PostAction).where(
@@ -41,7 +46,10 @@ class PostActionRepository:
             )
         )
         await self.session.execute(delete_post_act_query)
-        await self.session.commit()
+        try:
+            await self.session.commit()
+        except OSError:
+            raise custom_exc.DbUnavailable(code=500, message='Database unavailable.')
 
     async def delete_by_post_user_id(self, post_id: UUID, user_id: UUID):
         delete_post_act_query = delete(PostAction).where(
@@ -51,4 +59,7 @@ class PostActionRepository:
             )
         )
         await self.session.execute(delete_post_act_query)
-        await self.session.commit()
+        try:
+            await self.session.commit()
+        except OSError:
+            raise custom_exc.DbUnavailable(code=500, message='Database unavailable.')
