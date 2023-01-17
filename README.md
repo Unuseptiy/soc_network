@@ -1,6 +1,6 @@
 # Social network posts
 
-This repository presents the application that implements some logic of posts work and users work of social network.
+This repository contains an application that implements some logic of the work of posts and users of the social network.
 
 ## How to use
 You need poetry and docker installed.
@@ -34,3 +34,6 @@ make migrate head
 ```commandline
 make run
 ```
+
+После запуска Swagger доступен по ссылке
+**http://127.0.0.1:8000/docs**
