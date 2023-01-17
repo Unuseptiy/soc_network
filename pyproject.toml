@@ -35,3 +35,6 @@ python_files = "test_*.py"
 python_classes = ["*Test", "Test*"]
 python_functions = "test_*"
 testpaths = "tests/"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
