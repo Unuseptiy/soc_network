@@ -8,9 +8,6 @@ from pydantic import BaseSettings
 class DefaultSettings(BaseSettings):
     """
     Default configs for application.
-
-    Usually, we have three environments: for development, testing and production.
-    But in this situation, we only have standard settings for local development.
     """
 
     ENV: str = environ.get("ENV", "local")
@@ -66,5 +63,5 @@ class DefaultSettings(BaseSettings):
         )
 
     class Config:
-        env_file = ".env"
+        env_file = ".env.app"
         env_file_encoding = "utf-8"

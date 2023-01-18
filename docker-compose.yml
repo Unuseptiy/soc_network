@@ -1,11 +1,21 @@
 version: '3'
 
 services:
-  db:
+  soc_network_postgres:
     container_name: 'soc_network_postgres'
     image: 'postgres:14'
     restart: always
     env_file:
-      - ./.env
+      - .env.app
     ports:
-      - '${POSTGRES_PORT}:${POSTGRES_PORT}'
+      - "5432:5432"
+
+  app:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    container_name: soc-network-app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.app.compose

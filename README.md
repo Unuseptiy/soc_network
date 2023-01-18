@@ -18,7 +18,7 @@ poetry install
 ```commandline
 poetry shell
 ```
-4) Make .env
+4) Make env file
 ```commandline
 make env
 ```
@@ -35,5 +35,29 @@ make migrate head
 make run
 ```
 
-После запуска Swagger доступен по ссылке
+
+Run on container
+1) clone the repo
+```commandline
+git clone https://github.com/Unuseptiy/soc_network
+```
+2) Make env file
+```commandline
+make env
+```
+3) build containers
+```commandline
+docker-compose build
+```
+4) start containers
+```commandline
+docker-compose up
+```
+5) migrate db (only with first launch of container)(make commands in another CLI)
+```commandline
+cd PROJECT_DIR
+make migrate head
+```
+
+After launching the application, Swagger is available via the link
 **http://127.0.0.1:8000/docs**

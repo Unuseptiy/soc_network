@@ -3,5 +3,7 @@
 
 env/
 .env
+.env.app
+.env.app.compose
 
 .DS_Store
