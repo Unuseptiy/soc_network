@@ -28,6 +28,8 @@ class DefaultSettings(BaseSettings):
     ALGORITHM: str = environ.get("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", 1440))
 
+    HUNTER_API_KEY: str = environ.get("HUNTER_API_KEY", "")
+
     PWD_CONTEXT = CryptContext(schemes=["bcrypt"], deprecated="auto")
     OAUTH2_SCHEME = OAuth2PasswordBearer(tokenUrl=f"{APP_HOST}:{APP_PORT}{PATH_PREFIX}/user/authentication")
 

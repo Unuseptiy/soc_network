@@ -1,14 +1,14 @@
 import uuid
 from datetime import datetime, timedelta
-
 from fastapi import Depends, HTTPException
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
+import aiohttp
+import asyncio
 
 from soc_network.repositories import UserRepository
 from soc_network.schemas import RegistrationForm
-
 from soc_network.config import get_settings
 from soc_network.db.connection import get_session
 from soc_network.db.models import User
@@ -21,6 +21,21 @@ async def register_user(
         user_repo: UserRepository,
         user: RegistrationForm,
 ):
+    haunter_api_key = get_settings().HUNTER_API_KEY
+    hunter_verify_url = "https://api.hunter.io/v2/email-verifier"
+    query_params = {"email": user.email, "api_key": haunter_api_key}
+    valid_body_statuses = {"valid", "webmail"}
+    try:
+        timeout = aiohttp.ClientTimeout(total=23)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(hunter_verify_url, params=query_params) as resp:
+                verify_status_code = resp.status
+                resp_json = await resp.json()
+                verify_body_status = resp_json["data"]["status"]
+    except asyncio.exceptions.TimeoutError:
+        return False, "Verify timeout."
+    if verify_status_code != 200 or verify_body_status not in valid_body_statuses:
+        return False, "Email not verified."
     try:
         await user_repo.add(user)
     except db_exc.DbError:
