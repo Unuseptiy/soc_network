@@ -33,6 +33,15 @@ async def authentication(
     form_data: OAuth2PasswordRequestForm = Depends(),
     session: AsyncSession = Depends(get_session),
 ):
+    """
+    Authenticates user.
+    - input:
+        - username
+        - password
+    - output:
+        - access_token
+        - token_type
+    """
     user_repo = UserRepository(session)
     user = await service.authenticate_user(user_repo, form_data.username, form_data.password)
     if not user:
@@ -70,6 +79,15 @@ async def registration(
     registration_form: RegistrationForm = Body(...),
     session: AsyncSession = Depends(get_session),
 ):
+    """
+    Registers user.
+    - input:
+        - username
+        - password
+        - email
+    - output:
+        - message: operation status message.
+    """
     user_repo = UserRepository(session)
     try:
         await service.register_user(user_repo, registration_form)
@@ -99,6 +117,13 @@ async def registration(
 async def get_me(
     current_user: User = Depends(service.get_current_user),
 ):
+    """
+    Returns current user.
+    - input:
+        - empty
+    - output:
+        - UserSchema: user attributes.
+    """
     return UserSchema.from_orm(current_user)
 
 
@@ -119,6 +144,13 @@ async def delete_user(
     current_user: User = Depends(service.get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
+    """
+    Deletes current user.
+    - input:
+        - empty
+    - output:
+        - empty
+    """
     user_repo = UserRepository(session)
     try:
         await service.delete_user(user_repo, current_user.id)

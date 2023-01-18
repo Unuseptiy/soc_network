@@ -33,7 +33,7 @@ async def create_post(
         session: AsyncSession = Depends(get_session),
 ):
     """
-    Creates post in system.
+    Creates post.
     - input:
         body: post body
     - output:
@@ -74,6 +74,14 @@ async def update_post(
         current_user: User = Depends(user_service.get_current_user),
         session: AsyncSession = Depends(get_session),
 ):
+    """
+    Updates post.
+    - input:
+        - post_id
+        - new_body
+    - output:
+        - empty
+    """
     post_repo = PostRepository(session)
     try:
         await service.update_post(post_id=post_id, new_body=new_body, user=current_user, post_repo=post_repo)
@@ -141,6 +149,13 @@ async def delete_post(
         current_user: User = Depends(user_service.get_current_user),
         session: AsyncSession = Depends(get_session),
 ):
+    """
+    Deletes post.
+    - input:
+        - post_id
+    - output:
+        - empty
+    """
     post_repo = PostRepository(session)
     user_repo = UserRepository(session)
     post_act_repo = PostActionRepository(session)
@@ -190,9 +205,9 @@ async def rate_post(
     """
     Adds like/dislike to post.
     - input:
-        - post_id: post id
+        - post_id: post id.
     - output:
-        - empty
+        - message: operation status.
     """
     post_repo = PostRepository(session)
     user_repo = UserRepository(session)
@@ -242,6 +257,14 @@ async def delete_post_action(
         current_user: User = Depends(user_service.get_current_user),
         session: AsyncSession = Depends(get_session),
 ):
+    """
+    Deletes like/dislike on post.
+    - input
+        - action: string 'LIKE' or 'DISLIKE'
+        - post_id
+    - output:
+        - empty
+    """
     post_repo = PostRepository(session)
     user_repo = UserRepository(session)
     post_act_repo = PostActionRepository(session)
