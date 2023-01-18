@@ -25,6 +25,7 @@ def upgrade() -> None:
     sa.Column('username', sa.TEXT(), nullable=False, unique=True),
     sa.Column('password', sa.TEXT(), nullable=False),
     sa.Column('email', sa.TEXT(), nullable=True, unique=True),
+    sa.Column('data', sa.TEXT(), nullable=True),
     sa.PrimaryKeyConstraint('id', name=op.f('pk__user')),
     sa.UniqueConstraint('id', name=op.f('uq__user__id'))
     )

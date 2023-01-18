@@ -43,6 +43,30 @@ async def register_user(
     return True, "Successful registration!"
 
 
+async def get_additional_user_data(user: RegistrationForm, user_repo: UserRepository):
+    """Add additional user data from Clearbit to User in db."""
+
+    clearbit_email_find_url = "https://person.clearbit.com/v2/people/find"
+    query_params = {'email': user.email}
+    headers = {'Authorization': f'Bearer {get_settings().CLEARBIT_API_KEY}'}
+    try:
+        timeout = aiohttp.ClientTimeout(total=23)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(clearbit_email_find_url, params=query_params, headers=headers) as resp:
+                find_status_code = resp.status
+                resp_json = await resp.json()
+    except asyncio.exceptions.TimeoutError:
+        ...
+    if find_status_code == 200:
+        try:
+            await user_repo.update_by_email(email=user.email, data=str(resp_json))
+        except db_exc.DbError:
+            ...
+    else:
+        # retry if 202
+        # handle other status_codes
+        ...
+
 async def authenticate_user(
     user_repo: UserRepository,
     username: str,

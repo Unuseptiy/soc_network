@@ -12,7 +12,13 @@ You need poetry and docker installed.
 
 You need to get your hunter api key on https://hunter.io.
 Write your API KEY on new line on the files **.env.sample**, **.env.compose.sample** like that 
+
 ```HUNTER_API_KEY=YOUR HANTER API KEY```.
+
+You need to get your clearbit api key on https://clearbit.com.
+Write your API KEY on new line on the files **.env.sample**, **.env.compose.sample** like that 
+
+```CLEARBIT_API_KEY=YOUR CLEARBIT SECRET API KEY```.
 
 Also on this files you can adjust postgres env variables.
 

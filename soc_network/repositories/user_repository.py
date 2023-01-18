@@ -52,3 +52,17 @@ class UserRepository:
             await self.session.commit()
         except OSError:
             raise custom_exc.DbUnavailable(code=500, message='Database unavailable.')
+
+    async def update_by_email(self, email: str, data: str):
+        get_user_query = select(User).where(User.email == email)
+        try:
+            user_from_db = await self.session.scalar(get_user_query)
+        except OSError:
+            raise custom_exc.DbUnavailable(code=500, message='Database unavailable.')
+        if user_from_db is None:
+            raise custom_exc.DbError(f'No such user with email: {email}')
+        user_from_db.data = data
+        try:
+            await self.session.commit()
+        except OSError:
+            raise custom_exc.DbUnavailable(code=500, message='Database unavailable.')
