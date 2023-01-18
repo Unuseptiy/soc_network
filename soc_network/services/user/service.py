@@ -33,14 +33,16 @@ async def register_user(
                 resp_json = await resp.json()
                 verify_body_status = resp_json["data"]["status"]
     except asyncio.exceptions.TimeoutError:
-        return False, "Verify timeout."
+        raise serv_exc.VerifierTimeoutError("Verify timeout.")
+    except aiohttp.ClientConnectorError:
+        raise serv_exc.VerifierUnavailable("Verifier is unavailable.")
+
     if verify_status_code != 200 or verify_body_status not in valid_body_statuses:
-        return False, "Email not verified."
+        raise serv_exc.UnVerifiedEmailError("Email not verified.")
     try:
         await user_repo.add(user)
     except db_exc.DbError:
-        return False, "Username already exists."
-    return True, "Successful registration!"
+        raise serv_exc.UserAttrsAlreadyExist("Username and/or email already taken.")
 
 
 async def get_additional_user_data(user: RegistrationForm, user_repo: UserRepository):
@@ -56,6 +58,8 @@ async def get_additional_user_data(user: RegistrationForm, user_repo: UserReposi
                 find_status_code = resp.status
                 resp_json = await resp.json()
     except asyncio.exceptions.TimeoutError:
+        ...
+    except aiohttp.ClientConnectorError:
         ...
     if find_status_code == 200:
         try:

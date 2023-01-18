@@ -54,6 +54,15 @@ async def authentication(
         status.HTTP_400_BAD_REQUEST: {
             "description": "Bad parameters for registration.",
         },
+        status.HTTP_409_CONFLICT: {
+            "description": "Received username and/or email already taken.",
+        },
+        status.HTTP_424_FAILED_DEPENDENCY: {
+            "description": "Received email verification failed."
+        },
+        status.HTTP_503_SERVICE_UNAVAILABLE: {
+            "description": "Server can not verify received email."
+        },
     },
 )
 async def registration(
@@ -62,14 +71,19 @@ async def registration(
     session: AsyncSession = Depends(get_session),
 ):
     user_repo = UserRepository(session)
-    is_success, message = await service.register_user(user_repo, registration_form)
-    if is_success:
+    try:
+        await service.register_user(user_repo, registration_form)
         background_tasks.add_task(service.get_additional_user_data, registration_form, user_repo)
-        return {"message": message}
-    raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail=message,
-    )
+        return {"message": "Successful registration!"}
+    except serv_exc.UserAttrsAlreadyExist:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username and/or email already taken.")
+    except serv_exc.UnVerifiedEmailError:
+        raise HTTPException(status_code=status.HTTP_424_FAILED_DEPENDENCY, detail="Can not verify current email."
+                                                                                  "Please enter another email.")
+    except serv_exc.VerifierTimeoutError:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Cannot verify email.")
+    except serv_exc.VerifierUnavailable:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Cannot verify email.")
 
 
 @api_router.get(
