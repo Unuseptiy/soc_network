@@ -24,8 +24,15 @@ class User(BaseTable):
     )
     email = Column(
         "email",
+        # todo: заменить на строку
         TEXT,
         nullable=True,
         unique=True,
         doc="User email.",
+    )
+    data = Column(
+        "data",
+        TEXT,
+        nullable=True,
+        doc="Additional user data from Clearbit in json.",
     )
