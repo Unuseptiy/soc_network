@@ -2,6 +2,11 @@
 
 This repository contains an application that implements some logic of the work of posts and users of the social network.
 
+Bonus section:
+1) adding additional data by user email via clearbit - DONE;
+2) add email verification via hunter.io - DONE;
+3) add caching for likes and dislikes – work in progress.
+
 ## How to use
 clone the repo
 ```commandline
