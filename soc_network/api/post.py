@@ -2,8 +2,10 @@ import uuid
 from uuid import UUID
 from fastapi import APIRouter, Body, Query, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from redis import Redis
 
 from soc_network.db.connection import get_session
+from soc_network.db.connection import get_redis
 from soc_network.db.models import User
 from soc_network.schemas import Post as PostSchema, PostActionEnum
 from soc_network.services.post import service
@@ -148,6 +150,7 @@ async def delete_post(
         post_id: uuid.UUID,
         current_user: User = Depends(user_service.get_current_user),
         session: AsyncSession = Depends(get_session),
+        redis_sess: Redis = Depends(get_redis)
 ):
     """
     Deletes post.
@@ -158,7 +161,7 @@ async def delete_post(
     """
     post_repo = PostRepository(session)
     user_repo = UserRepository(session)
-    post_act_repo = PostActionRepository(session)
+    post_act_repo = PostActionRepository(session, redis_sess)
     try:
         await service.delete_post(
             post_id=post_id,
@@ -201,6 +204,7 @@ async def rate_post(
         post_id: UUID = Query(...),
         current_user: User = Depends(user_service.get_current_user),
         session: AsyncSession = Depends(get_session),
+        redis_sess: Redis = Depends(get_redis),
 ):
     """
     Adds like/dislike to post.
@@ -211,7 +215,7 @@ async def rate_post(
     """
     post_repo = PostRepository(session)
     user_repo = UserRepository(session)
-    post_act_repo = PostActionRepository(session)
+    post_act_repo = PostActionRepository(session, redis_sess)
     try:
         await service.rate_post(
             post_id=post_id,
@@ -256,6 +260,7 @@ async def delete_post_action(
         post_id: UUID = Query(...),
         current_user: User = Depends(user_service.get_current_user),
         session: AsyncSession = Depends(get_session),
+        redis_sess: Redis = Depends(get_redis),
 ):
     """
     Deletes like/dislike on post.
@@ -267,7 +272,7 @@ async def delete_post_action(
     """
     post_repo = PostRepository(session)
     user_repo = UserRepository(session)
-    post_act_repo = PostActionRepository(session)
+    post_act_repo = PostActionRepository(session, redis_sess)
     try:
         await service.delete_post_rate(
             post_id=post_id,

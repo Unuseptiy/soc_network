@@ -23,6 +23,10 @@ class DefaultSettings(BaseSettings):
     DB_CONNECT_RETRY: int = environ.get("DB_CONNECT_RETRY", 20)
     DB_POOL_SIZE: int = environ.get("DB_POOL_SIZE", 15)
 
+    REDIS_HOST: str = environ.get("REDIS_HOST", "localhost")
+    REDIS_PORT: int = environ.get("REDIS_PORT", 6379)
+    REDIS_CACHE_DB: int = 0
+
     # to get a string like this run: "openssl rand -hex 32"
     SECRET_KEY: str = environ.get("SECRET_KEY", "")
     ALGORITHM: str = environ.get("ALGORITHM", "HS256")

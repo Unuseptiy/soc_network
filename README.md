@@ -5,7 +5,7 @@ This repository contains an application that implements some logic of the work o
 Bonus section:
 1) adding additional data by user email via clearbit - DONE;
 2) add email verification via hunter.io - DONE;
-3) add caching for likes and dislikes – work in progress.
+3) add caching for likes and dislikes – DONE.
 
 ## How to use
 clone the repo
@@ -27,7 +27,7 @@ Write your API KEY on new line on the files **.env.sample**, **.env.compose.samp
 
 Also on this files you can adjust postgres env variables.
 
-Run on host:
+Run on host (Currently NOT AVAILABLE):
 1) Install dependencies
     ```commandline
     poetry install

@@ -59,7 +59,7 @@ async def delete_post(
         raise serv_exc.NotPermissionsError(f'User {user.username} have not permissions to delete post {post_id}.')
 
     # delete all actions that related to post
-    post_acts = await post_act_repo.list_by(post_id=post_id)
+    post_acts = await post_act_repo.list_by_post_id(post_id=post_id)
     for post_act in post_acts:
         await post_act_repo.delete_by_post_user_id(post_id=post_id, user_id=post_act.user_id)
 
@@ -87,7 +87,7 @@ async def rate_post(
         raise serv_exc.NotPermissionsError(f'User {user.username} have not permissions to evaluate post {post_id}.')
 
     # checking that there are no other actions from this user with this post
-    post_acts = await post_act_repo.list_by(user_id=user.id, post_id=post_id)
+    post_acts = await post_act_repo.list_by_post_id_user_id(post_id=post_id, user_id=user.id)
     # if there is, then delete them all (like - is reverse action for dislike)
     action_duplicate_flag = False
     for post_act in post_acts:
@@ -164,7 +164,7 @@ async def have_permissions_to_delete_post_act(
         action: str,
         post_act_repo: PostActionRepository,
 ):
-    post_acts = await post_act_repo.list_by(post_id=post_id, user_id=user.id)
+    post_acts = await post_act_repo.list_by_post_id_user_id(post_id=post_id, user_id=user.id)
     for post in post_acts:
         if post.action == action:
             return True

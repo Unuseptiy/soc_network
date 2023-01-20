@@ -19,3 +19,8 @@ services:
       - "8000:8000"
     env_file:
       - .env.app.compose
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    command: ["redis-server", "--save"]
