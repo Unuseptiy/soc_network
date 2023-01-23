@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 import aiohttp
 import asyncio
+import logging
 
 from soc_network.repositories import UserRepository
 from soc_network.schemas import RegistrationForm
@@ -15,6 +16,15 @@ from soc_network.db.models import User
 from soc_network.schemas import TokenData
 from soc_network.repositories import exceptions as db_exc
 from soc_network.services import exceptions as serv_exc
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.ERROR)
+
+handler = logging.FileHandler(f"{__name__}.log")
+formatter = logging.Formatter("%(name)s %(asctime)s %(levelname)s %(message)s")
+
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 async def register_user(
@@ -33,12 +43,16 @@ async def register_user(
                 resp_json = await resp.json()
                 verify_body_status = resp_json["data"]["status"]
     except asyncio.exceptions.TimeoutError:
+        logger.error("Hunter.io timeout error")
         raise serv_exc.VerifierTimeoutError("Verify timeout.")
     except aiohttp.ClientConnectorError:
+        logger.error("Hunter.io is unavailable.")
         raise serv_exc.VerifierUnavailable("Verifier is unavailable.")
-
     if verify_status_code != 200 or verify_body_status not in valid_body_statuses:
+        logger.info(f"Email {user.email} is not verified. Verifier status is {verify_body_status}")
         raise serv_exc.UnVerifiedEmailError("Email not verified.")
+    logger.info(f"Email {user.email} is verified. Verifier status is {verify_body_status}")
+
     try:
         await user_repo.add(user)
     except db_exc.DbError:
@@ -58,9 +72,9 @@ async def get_additional_user_data(user: RegistrationForm, user_repo: UserReposi
                 find_status_code = resp.status
                 resp_json = await resp.json()
     except asyncio.exceptions.TimeoutError:
-        ...
+        logger.error("Clearbit timeout error")
     except aiohttp.ClientConnectorError:
-        ...
+        logger.error("Clearbit is unavailable.")
     if find_status_code == 200:
         try:
             await user_repo.update_by_email(email=user.email, data=str(resp_json))
@@ -69,7 +83,9 @@ async def get_additional_user_data(user: RegistrationForm, user_repo: UserReposi
     else:
         # retry if 202
         # handle other status_codes
+        logger.info(f"Additional data not received, clearbit response status code {find_status_code}")
         ...
+
 
 async def authenticate_user(
     user_repo: UserRepository,
@@ -124,9 +140,11 @@ async def get_current_user(
             raise credentials_exception
         token_data = TokenData(username=username)
     except JWTError:
+        logger.warning(f"can not decode JWT token: {token}")
         raise credentials_exception
     user = await user_repo.get_by_username(username=token_data.username)
     if user is None:
+        logger.warning(f"can not find user {user} from JWT token: {token}")
         raise credentials_exception
     return user
 

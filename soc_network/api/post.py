@@ -1,9 +1,11 @@
 import uuid
 from uuid import UUID
-from fastapi import APIRouter, Body, Query, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Body, Query, Depends, HTTPException, Response, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis import Redis
+import logging
 
+from soc_network.config import get_settings
 from soc_network.db.connection import get_session
 from soc_network.db.connection import get_redis
 from soc_network.db.models import User
@@ -12,6 +14,16 @@ from soc_network.services.post import service
 from soc_network.services.user import service as user_service
 from soc_network.services import exceptions as serv_exc
 from soc_network.repositories import PostRepository, UserRepository, PostActionRepository
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+handler = logging.FileHandler(f"{__name__}.log")
+formatter = logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s")
+
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 api_router = APIRouter(
@@ -30,6 +42,7 @@ api_router = APIRouter(
     }
 )
 async def create_post(
+        request: Request,
         body: str = Body(..., min_length=1),
         current_user: User = Depends(user_service.get_current_user),
         session: AsyncSession = Depends(get_session),
@@ -46,8 +59,26 @@ async def create_post(
     post = PostSchema(body=body, author_id=current_user.id)
     try:
         post_id = await service.create_post(post=post, post_repo=post_repo)
+        logger.info(
+            "method: %(method)s, client: %(client)s, path: %(path)s, user: %(user)s, params {body: %(body)s}, "
+            "status_code: %(status)s" %
+            {'method': request.method,
+             'client': request.client.host,
+             'user': current_user.username,
+             'path': request.url.path,
+             'body': body,
+             'status': 201})
         return {'post_id': post_id}
     except serv_exc.NoUserError:
+        logger.info(
+            "method: %(method)s, client: %(client)s, path: %(path)s, user: %(user)s, params {body: %(body)s}, "
+            "status_code: %(status)s" %
+            {'method': request.method,
+             'client': request.client.host,
+             'user': current_user.username,
+             'path': request.url.path,
+             'body': body,
+             'status': 404})
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No user {current_user.username}')
 
 
@@ -71,6 +102,7 @@ async def create_post(
     },
 )
 async def update_post(
+        request: Request,
         post_id: uuid.UUID = Query(...),
         new_body: str = Body(..., min_length=1),
         current_user: User = Depends(user_service.get_current_user),
@@ -87,11 +119,40 @@ async def update_post(
     post_repo = PostRepository(session)
     try:
         await service.update_post(post_id=post_id, new_body=new_body, user=current_user, post_repo=post_repo)
+        logger.info(
+            "method: %(method)s, client: %(client)s, path: %(path)s, user: %(user)s, params {post_id: %(post_id)s, "
+            "body: %(body)s}, status_code: %(status)s" %
+            {'method': request.method,
+             'client': request.client.host,
+             'user': current_user.username,
+             'path': request.url.path,
+             'post_id': post_id,
+             'body': new_body,
+             'status': 204})
         return
     except serv_exc.NotPermissionsError:
+        logger.info("method: %(method)s, client: %(client)s, path: %(path)s, user: %(user)s, "
+                    "params {post_id: %(post_id)s, body: %(body)s}, status_code: %(status)s" %
+                    {'method': request.method,
+                     'client': request.client.host,
+                     'user': current_user.username,
+                     'path': request.url.path,
+                     'post_id': post_id,
+                     'body': new_body,
+                     'status': 403})
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail=f'The user `{current_user.username}` can not edit the post `{post_id}`')
     except serv_exc.NoPostError:
+        logger.info(
+            "method: %(method)s, client: %(client)s, path: %(path)s, user: %(user)s, params {post_id: %(post_id)s, "
+            "body: %(body)s}, status_code: %(status)s" %
+            {'method': request.method,
+             'client': request.client.host,
+             'user': current_user.username,
+             'path': request.url.path,
+             'post_id': post_id,
+             'body': new_body,
+             'status': 404})
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f'Post {post_id} not found.')
 
@@ -110,6 +171,7 @@ async def update_post(
     },
 )
 async def get_post(
+        request: Request,
         post_id: uuid.UUID = Query(...),
         current_user: User = Depends(user_service.get_current_user),
         session: AsyncSession = Depends(get_session),
@@ -124,6 +186,15 @@ async def get_post(
     """
     post_repo = PostRepository(session)
     post = await service.get_post(post_id=post_id, post_repo=post_repo)
+    logger.info(
+        "method: %(method)s, client: %(client)s, path: %(path)s, user: %(user)s, params {post_id: %(post_id)s}, "
+        "status_code: %(status)s" %
+        {'method': request.method,
+         'client': request.client.host,
+         'user': current_user.username,
+         'path': request.url.path,
+         'post_id': post_id,
+         'status': 200 if post else 404})
     if post:
         return PostSchema.from_orm(post)
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -147,6 +218,7 @@ async def get_post(
     },
 )
 async def delete_post(
+        request: Request,
         post_id: uuid.UUID,
         current_user: User = Depends(user_service.get_current_user),
         session: AsyncSession = Depends(get_session),
@@ -170,13 +242,49 @@ async def delete_post(
             user_repo=user_repo,
             post_act_repo=post_act_repo,
         )
+        logger.info(
+            "method: %(method)s, client: %(client)s, path: %(path)s, user: %(user)s, params {post_id: %(post_id)s}, "
+            "status_code: %(status)s" %
+            {'method': request.method,
+             'client': request.client.host,
+             'user': current_user.username,
+             'path': request.url.path,
+             'post_id': post_id,
+             'status': 204})
     except serv_exc.NotPermissionsError:
+        logger.info(
+            "method: %(method)s, client: %(client)s, path: %(path)s, user: %(user)s, params {post_id: %(post_id)s}, "
+            "status_code: %(status)s" %
+            {'method': request.method,
+             'client': request.client.host,
+             'user': current_user.username,
+             'path': request.url.path,
+             'post_id': post_id,
+             'status': 403})
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail=f'The user `{current_user.username}` can not delete the post `{post_id}`')
     except serv_exc.NoUserError:
+        logger.info(
+            "method: %(method)s, client: %(client)s, path: %(path)s, user: %(user)s, params {post_id: %(post_id)s}, "
+            "status_code: %(status)s" %
+            {'method': request.method,
+             'client': request.client.host,
+             'user': current_user.username,
+             'path': request.url.path,
+             'post_id': post_id,
+             'status': 404})
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f'User {current_user.username} not found')
     except serv_exc.NoPostError:
+        logger.info(
+            "method: %(method)s, client: %(client)s, path: %(path)s, user: %(user)s, params {post_id: %(post_id)s}, "
+            "status_code: %(status)s" %
+            {'method': request.method,
+             'client': request.client.host,
+             'user': current_user.username,
+             'path': request.url.path,
+             'post_id': post_id,
+             'status': 404})
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f'Post {post_id} not found')
 
@@ -200,6 +308,7 @@ async def delete_post(
     },
 )
 async def rate_post(
+        request: Request,
         action: PostActionEnum,
         post_id: UUID = Query(...),
         current_user: User = Depends(user_service.get_current_user),
@@ -225,15 +334,65 @@ async def rate_post(
             user_repo=user_repo,
             post_act_repo=post_act_repo,
         )
+        logger.info(
+            "method: %(method)s, client: %(client)s, path: %(path)s, user: %(user)s, params {post_id: %(post_id)s, "
+            "action: %(action)s}, status_code: %(status)s" %
+            {'method': request.method,
+             'client': request.client.host,
+             'user': current_user.username,
+             'path': request.url.path,
+             'post_id': post_id,
+             'action': action,
+             'status': 201})
         return {'message': 'Successful assessment!'}
     except serv_exc.NotPermissionsError:
+        logger.info(
+            "method: %(method)s, client: %(client)s, path: %(path)s, user: %(user)s, params {post_id: %(post_id)s, "
+            "action: %(action)s}, status_code: %(status)s" %
+            {'method': request.method,
+             'client': request.client.host,
+             'user': current_user.username,
+             'path': request.url.path,
+             'post_id': post_id,
+             'action': action,
+             'status': 403})
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail=f'The user `{current_user.username}` can not rate the post `{post_id}`')
     except serv_exc.NoUserError:
+        logger.info(
+            "method: %(method)s, client: %(client)s, path: %(path)s, user: %(user)s, params {post_id: %(post_id)s, "
+            "action: %(action)s}, status_code: %(status)s" %
+            {'method': request.method,
+             'client': request.client.host,
+             'user': current_user.username,
+             'path': request.url.path,
+             'post_id': post_id,
+             'action': action,
+             'status': 404})
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No user `{current_user.username}`')
     except serv_exc.NoPostError:
+        logger.info(
+            "method: %(method)s, client: %(client)s, path: %(path)s, user: %(user)s, params {post_id: %(post_id)s, "
+            "action: %(action)s}, status_code: %(status)s" %
+            {'method': request.method,
+             'client': request.client.host,
+             'user': current_user.username,
+             'path': request.url.path,
+             'post_id': post_id,
+             'action': action,
+             'status': 404})
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No post `{post_id}`')
     except serv_exc.ActionDuplicateError:
+        logger.info(
+            "method: %(method)s, client: %(client)s, path: %(path)s, user: %(user)s, params {post_id: %(post_id)s, "
+            "action: %(action)s}, status_code: %(status)s" %
+            {'method': request.method,
+             'client': request.client.host,
+             'user': current_user.username,
+             'path': request.url.path,
+             'post_id': post_id,
+             'action': action,
+             'status': 409})
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                             detail=f'The rate {action} to the post {post_id} from the user {current_user.username} '
                                    f'already exist')
@@ -256,6 +415,7 @@ async def rate_post(
     },
 )
 async def delete_post_action(
+        request: Request,
         action: PostActionEnum,
         post_id: UUID = Query(...),
         current_user: User = Depends(user_service.get_current_user),
@@ -282,13 +442,53 @@ async def delete_post_action(
             user_repo=user_repo,
             post_act_repo=post_act_repo,
         )
+        logger.info(
+            "method: %(method)s, client: %(client)s, path: %(path)s, user: %(user)s, params {post_id: %(post_id)s, "
+            "action: %(action)s}, status_code: %(status)s" %
+            {'method': request.method,
+             'client': request.client.host,
+             'user': current_user.username,
+             'path': request.url.path,
+             'post_id': post_id,
+             'action': action,
+             'status': 204})
     except serv_exc.NotPermissionsError:
+        logger.info(
+            "method: %(method)s, client: %(client)s, path: %(path)s, user: %(user)s, params {post_id: %(post_id)s, "
+            "action: %(action)s}, status_code: %(status)s" %
+            {'method': request.method,
+             'client': request.client.host,
+             'user': current_user.username,
+             'path': request.url.path,
+             'post_id': post_id,
+             'action': action,
+             'status': 404})
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f'There is no action {action} on the post {post_id} from the '
                                    f'user {current_user.username}')
     except serv_exc.NoUserError:
+        logger.info(
+            "method: %(method)s, client: %(client)s, path: %(path)s, user: %(user)s, params {post_id: %(post_id)s, "
+            "action: %(action)s}, status_code: %(status)s" %
+            {'method': request.method,
+             'client': request.client,
+             'user': current_user.username,
+             'path': request.url.path,
+             'post_id': post_id,
+             'action': action,
+             'status': 404})
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f'User {current_user.username} not found')
     except serv_exc.NoPostError:
+        logger.info(
+            "method: %(method)s, client: %(client)s, path: %(path)s, user: %(user)s, params {post_id: %(post_id)s, "
+            "action: %(action)s}, status_code: %(status)s" %
+            {'method': request.method,
+             'client': request.client.host,
+             'user': current_user.username,
+             'path': request.url.path,
+             'post_id': post_id,
+             'action': action,
+             'status': 404})
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f'Post {post_id} not found')
