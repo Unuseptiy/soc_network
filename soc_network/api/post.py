@@ -38,7 +38,10 @@ api_router = APIRouter(
     responses={
         status.HTTP_404_NOT_FOUND: {
             "description": "User not found."
-        }
+        },
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
+            "description": "Internal server error."
+        },
     }
 )
 async def create_post(
@@ -98,6 +101,9 @@ async def create_post(
         },
         status.HTTP_404_NOT_FOUND: {
             "description": "Resource not found.",
+        },
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
+            "description": "Internal server error."
         },
     },
 )
@@ -168,6 +174,9 @@ async def update_post(
         status.HTTP_404_NOT_FOUND: {
             "description": "Resource not found.",
         },
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
+            "description": "Internal server error."
+        },
     },
 )
 async def get_post(
@@ -214,6 +223,9 @@ async def get_post(
         },
         status.HTTP_404_NOT_FOUND: {
             "description": "That post not found."
+        },
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
+            "description": "Internal server error."
         },
     },
 )
@@ -304,6 +316,9 @@ async def delete_post(
         },
         status.HTTP_409_CONFLICT: {
             "description": "Resource already exists.",
+        },
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
+            "description": "Internal server error."
         },
     },
 )
@@ -411,6 +426,9 @@ async def rate_post(
         },
         status.HTTP_404_NOT_FOUND: {
             "description": "That post not found."
+        },
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
+            "description": "Internal server error."
         },
     },
 )

@@ -37,6 +37,9 @@ api_router = APIRouter(
         status.HTTP_401_UNAUTHORIZED: {
             "description": "Incorrect username or password."
         },
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
+            "description": "Internal server error."
+        },
     }
 )
 async def authentication(
@@ -85,6 +88,9 @@ async def authentication(
         },
         status.HTTP_424_FAILED_DEPENDENCY: {
             "description": "Received email verification failed."
+        },
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
+            "description": "Internal server error."
         },
         status.HTTP_503_SERVICE_UNAVAILABLE: {
             "description": "Server can not verify received email."
@@ -174,6 +180,9 @@ async def registration(
         status.HTTP_401_UNAUTHORIZED: {
             "description": "Could not validate credentials.",
         },
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
+            "description": "Internal server error."
+        },
     },
 )
 async def get_me(
@@ -207,6 +216,9 @@ async def get_me(
         },
         status.HTTP_400_BAD_REQUEST: {
             "description": "No such user."
+        },
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
+            "description": "Internal server error."
         },
     },
 )
